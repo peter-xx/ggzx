@@ -17,7 +17,7 @@
 | 代码检查 | ESLint             | ^10.8.0（flat config） |
 | 样式检查 | Stylelint          | ^17.14.1               |
 | 格式化   | Prettier           | ^3.9.6                 |
-| 提交规范 | Commitlint + Husky | ^21 / ^8               |
+| 提交规范 | Commitlint + Husky | ^21 / ^9               |
 
 ## 常用命令
 
@@ -29,7 +29,6 @@ pnpm preview        # 预览生产构建产物
 pnpm lint           # ESLint 检查 src
 pnpm fix            # ESLint 自动修复 src
 pnpm format         # Prettier 格式化全项目
-pnpm lint:eslint    # ESLint 缓存 + 修复
 pnpm lint:style     # Stylelint 检查样式
 ```
 
@@ -55,7 +54,7 @@ pnpm lint:style     # Stylelint 检查样式
 
 ### ESLint（eslint.config.js，flat config）
 
-- 基础规则：`eslint:recommended` + TypeScript 推荐 + Vue3 essential + Prettier
+- 基础规则：`eslint:recommended` + TypeScript 推荐 + Vue3 essential，另以 `eslint-config-prettier` 关闭与 Prettier 冲突的规则（格式统一由 Prettier 处理）
 - 禁止 `var`，禁止未使用变量，`no-console`/`no-debugger` 在生产环境为 error
 - 组件命名不强制 `-` 连接（`vue/multi-word-component-names` 已关闭）
 
