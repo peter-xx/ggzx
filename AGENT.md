@@ -4,27 +4,34 @@
 
 ## 项目概述
 
-`ggzx` 是一个基于 Vue 3 + TypeScript 的前端项目，使用 Vite 作为构建工具，采用 `<script setup>` 单文件组件（SFC）写法。
+`ggzx` 是一个基于 Vue 3 + TypeScript 的管理后台前端项目（硅谷甄选运营平台），使用 Vite 作为构建工具，采用 `<script setup>` 单文件组件（SFC）写法，集成了 Element Plus 组件库、Axios 请求封装、本地 Mock 与 SVG 图标体系。
 
 ## 技术栈
 
-| 类别     | 技术               | 版本                   |
-| -------- | ------------------ | ---------------------- |
-| 框架     | Vue                | ^3.5.40                |
-| 语言     | TypeScript         | ~6.0.2                 |
-| 构建     | Vite               | ^8.2.0                 |
-| 包管理   | pnpm               | workspace 模式         |
-| 代码检查 | ESLint             | ^10.8.0（flat config） |
-| 样式检查 | Stylelint          | ^17.14.1               |
-| 格式化   | Prettier           | ^3.9.6                 |
-| 提交规范 | Commitlint + Husky | ^21 / ^9               |
+| 类别     | 技术                      | 版本                       |
+| -------- | ------------------------- | -------------------------- |
+| 框架     | Vue                       | ^3.5.40                    |
+| 语言     | TypeScript                | ~6.0.2                     |
+| 构建     | Vite                      | ^8.2.0                     |
+| UI 组件  | Element Plus              | ^2.14.3                    |
+| 请求     | Axios                     | ^1.19.0                    |
+| Mock     | vite-plugin-mock + mockjs | ^3.0.2 / ^1.1.0            |
+| 图标     | vite-plugin-svg-icons     | ^2.0.1                     |
+| 样式     | Sass (scss)               | ^1.102.0                   |
+| 包管理   | pnpm                      | 11.x（allowBuilds 白名单） |
+| 代码检查 | ESLint                    | ^10.8.0（flat config）     |
+| 样式检查 | Stylelint                 | ^17.14.1                   |
+| 格式化   | Prettier                  | ^3.9.6                     |
+| 提交规范 | Commitlint + Husky        | ^21 / ^9                   |
 
 ## 常用命令
 
 ```bash
 pnpm install        # 安装依赖（preinstall 脚本会检查包管理器）
-pnpm dev            # 启动开发服务器（自动打开浏览器）
-pnpm build          # 类型检查 + 生产构建（vue-tsc -b && vite build）
+pnpm dev            # 启动开发服务器（自动打开浏览器，启用本地 mock）
+pnpm build          # 类型检查 + 生产构建
+pnpm build:test     # 以 test 模式构建（加载 .env.test）
+pnpm build:pro      # 以 production 模式构建（加载 .env.production）
 pnpm preview        # 预览生产构建产物
 pnpm lint           # ESLint 检查 src
 pnpm fix            # ESLint 自动修复 src
@@ -35,20 +42,52 @@ pnpm lint:style     # Stylelint 检查样式
 ## 项目结构
 
 ```
-├── src/                  # 源码目录
-│   ├── assets/           # 静态资源
-│   ├── components/       # 组件
-│   ├── App.vue           # 根组件
-│   ├── main.ts           # 应用入口
-│   └── style.css         # 全局样式
-├── public/               # 公共静态资源
-├── scripts/              # 脚本（preinstall 包管理器检查）
-├── .husky/               # Git 钩子
-├── eslint.config.js      # ESLint flat config
-├── .stylelintrc.cjs      # Stylelint 配置
-├── .prettierrc.json      # Prettier 配置（无分号、单引号）
-└── commitlint.config.cjs # 提交信息校验规则
+├── src/
+│   ├── api/               # 接口定义（按模块分目录，如 user/）
+│   ├── assets/
+│   │   └── icons/         # SVG 图标源文件（svg-icons 插件读取）
+│   ├── components/
+│   │   ├── SvgIcon/       # SVG 图标封装组件
+│   │   └── index.ts       # 全局组件注册入口
+│   ├── styles/
+│   │   ├── index.scss     # 全局样式入口（@use reset）
+│   │   ├── reset.scss     # 样式重置
+│   │   └── variable.scss  # SCSS 变量（vite additionalData 自动注入）
+│   ├── utils/
+│   │   └── request.ts     # Axios 实例封装（拦截器、错误提示）
+│   ├── App.vue            # 根组件
+│   ├── main.ts            # 应用入口
+│   └── vite-env.d.ts      # 环境类型声明（含 svg-icons 虚拟模块）
+├── mock/
+│   └── user.ts            # 本地 Mock 接口（vite-plugin-mock）
+├── public/                # 公共静态资源
+├── scripts/               # 脚本（preinstall 包管理器检查）
+├── .husky/                # Git 钩子
+├── .env.development       # 开发环境变量
+├── .env.production        # 生产环境变量
+├── .env.test              # 测试模式变量
+├── eslint.config.js       # ESLint flat config
+├── .stylelintrc.cjs       # Stylelint 配置
+├── .prettierrc.json       # Prettier 配置（无分号、单引号等）
+└── commitlint.config.cjs  # 提交信息校验规则
 ```
+
+## 接口与 Mock
+
+- Axios 实例 baseURL 取自 `VITE_APP_BASE_API`（开发环境 `/dev-api`）
+- **Mock url 必须与「baseURL + 接口路径」拼接后的完整路径一致**（如 `/dev-api/admin/acl/index/login`），vite-plugin-mock 按完整请求路径匹配
+- Mock 仅在 `vite dev` 时启用（`enable: command === 'serve'`）
+- `vite.config.ts` 中已配置 `/dev-api` 代理（开发时被 bypass 跳过以放行 mock）；接入真实后端时，将 `viteMockServe` 的 `enable` 改为 `false` 即可让代理生效
+- 响应数据结构约定：`{ code, message, ok, data }`（见 `src/api/user/type.ts` 的 `ResponseData`）
+
+## 环境变量
+
+| 变量                | 说明                                     |
+| ------------------- | ---------------------------------------- |
+| `VITE_APP_TITLE`    | 应用标题                                 |
+| `VITE_APP_BASE_API` | 接口基础路径（dev/test/prod 各环境不同） |
+
+> 注意：.env 文件中不要设置 `NODE_ENV`（Vite 会忽略，由 mode 决定）。
 
 ## 代码规范
 
@@ -60,14 +99,19 @@ pnpm lint:style     # Stylelint 检查样式
 
 ### Prettier（.prettierrc.json）
 
-- `semi: false`（不使用分号）
-- `singleQuote: true`（单引号）
+- `semi: false`（不使用分号）、`singleQuote: true`（单引号）
+- `trailingComma: "all"`、`tabWidth: 2`、`htmlWhitespaceSensitivity: "ignore"`
 
 ### Stylelint（.stylelintrc.cjs）
 
 - 属性书写顺序按 recess-order 规范
 - 允许使用 `:deep()`、`:global` 修改组件默认样式
 - 忽略 `*.js/ts/json/md` 等非样式文件
+
+### SCSS 约定
+
+- Vite 通过 `additionalData` 自动注入 `@use "@/styles/variable"`，组件内可直接使用其中的变量，无需手动引入
+- 局部文件引入遵循 `@use` 语法（不带 `.scss` 扩展名），避免 `@import`（已废弃）
 
 ## Git 提交规范
 
@@ -81,14 +125,14 @@ pnpm lint:style     # Stylelint 检查样式
 
 ### 提交前钩子（Husky）
 
-- `pre-commit`：lint-staged 对暂存文件执行 `eslint --fix` 和 `prettier --write`，需确保暂存区文件通过检查
+- `pre-commit`：lint-staged 对暂存文件执行 `eslint --fix` 和 `prettier --write`（含 css/scss），需确保暂存区文件通过检查
 - `commit-msg`：commitlint 校验提交信息格式
 
 > 提示：Windows 下 PowerShell 执行 husky 钩子可能受限，如遇问题请用 Git Bash 全路径运行相关命令。
 
 ## 约定与注意点
 
-- 使用 pnpm 作为包管理器（preinstall 脚本强制校验），不要使用 npm/yarn
+- 使用 pnpm 作为包管理器（preinstall 脚本强制校验），不要使用 npm/yarn；pnpm 11 下依赖的 postinstall 需在 `pnpm-workspace.yaml` 的 `allowBuilds` 白名单中声明
 - 依赖安装后 husky 通过 `prepare` 脚本自动安装钩子
 - 修改配置文件（eslint/stylelint/commitlint）后需自测对应 lint 命令
-- 新建组件使用 `<script setup lang="ts">` 写法
+- 新建组件使用 `<script setup lang="ts">` 写法，接口类型命名使用 PascalCase
