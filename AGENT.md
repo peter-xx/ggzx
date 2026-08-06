@@ -113,6 +113,70 @@ pnpm lint:style     # Stylelint 检查样式
 - Vite 通过 `additionalData` 自动注入 `@use "@/styles/variable"`，组件内可直接使用其中的变量，无需手动引入
 - 局部文件引入遵循 `@use` 语法（不带 `.scss` 扩展名），避免 `@import`（已废弃）
 
+## 分支与开发流程（Git Flow）
+
+本仓库统一采用 Git Flow 工作流，所有开发必须遵循以下分支规则与流程。
+
+### 分支结构
+
+| 分支类型 | 命名规则    | 生命周期 | 说明                                            |
+| -------- | ----------- | -------- | ----------------------------------------------- |
+| 主分支   | `main`      | 长期     | 仅存放可发布的正式版本，禁止直接开发与推送      |
+| 集成分支 | `develop`   | 长期     | 日常开发集成分支，feature 合并目的地            |
+| 功能分支 | `feature/*` | 临时     | 新功能开发，从 develop 拉取，完成后删除         |
+| 发版分支 | `release/*` | 临时     | 发版前准备（修 bug、改版本号），从 develop 拉取 |
+| 修复分支 | `hotfix/*`  | 临时     | 生产环境紧急修复，从 main 拉取                  |
+
+### 日常开发流程（feature）
+
+```bash
+git checkout develop && git pull          # 1. 同步最新 develop
+
+git checkout -b feature/xxx develop       # 2. 从 develop 拉功能分支
+# ... 开发、本地自测（pnpm lint） ...
+
+git add <文件>
+git commit -m "feat: ..."                 # 3. 提交（husky 自动检查 lint/commitlint）
+
+git checkout develop && git pull          # 4. 同步 develop（有冲突先解决）
+git checkout feature/xxx
+git merge develop
+
+git push -u origin feature/xxx            # 5. 推送功能分支
+# 6. GitHub 创建 PR：base=develop，compare=feature/xxx
+# 7. Code Review 通过后合并到 develop，删除 feature 分支
+```
+
+### 发版流程（release）
+
+```bash
+git checkout -b release/x.y.z develop     # 1. 从 develop 拉发版分支
+# 2. 仅做 bug 修复与版本号更新，不开发新功能
+# 3. 测试通过后：
+git checkout main && git merge --no-ff release/x.y.z   # 合入 main
+git tag -a vx.y.z -m "vx.y.z" && git push origin --tags  # 打 tag
+git checkout develop && git merge --no-ff release/x.y.z  # 同步回 develop
+git push origin --delete release/x.y.z   # 删除发版分支
+```
+
+### 紧急修复流程（hotfix）
+
+```bash
+git checkout -b hotfix/xxx main           # 1. 从 main 拉修复分支
+# 2. 修复并提交（type 用 fix）
+# 3. 合入 main 并打 tag 发布
+git checkout main && git merge --no-ff hotfix/xxx
+git checkout develop && git merge --no-ff hotfix/xxx  # 同步修复到 develop
+```
+
+### 规则要点
+
+- 禁止直接向 `main` / `develop` 提交代码，所有改动必须通过 PR 合入
+- 分支命名使用英文 kebab-case，如 `feature/login-page`、`hotfix/token-expire`
+- feature 分支只做一次提交无关的独立功能；发版分支只修 bug
+- 合并到 main/develop 统一使用 `--no-ff`（保留合并记录）
+- PR 标题建议复用提交信息格式（如 `feat: xxx`），便于追溯
+
 ## Git 提交规范
 
 ### 提交信息格式（Commitlint）
