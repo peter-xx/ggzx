@@ -11,6 +11,8 @@ export const formatDate = (
   fmt = 'YYYY-MM-DD HH:mm:ss',
 ): string => {
   const d = date instanceof Date ? date : new Date(date)
+  // 无效日期返回空字符串，避免输出 'Invalid Date'
+  if (Number.isNaN(d.getTime())) return ''
   const pad = (n: number) => String(n).padStart(2, '0')
   const map: Record<string, string> = {
     YYYY: String(d.getFullYear()),
