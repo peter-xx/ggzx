@@ -8,6 +8,7 @@
           :model="loginForm"
           :rules="rules"
           ref="loginForms"
+          @submit.prevent="login"
         >
           <h1>Hello</h1>
           <h2>欢迎来到硅谷甄选</h2>
@@ -31,7 +32,8 @@
               class="login_btn"
               type="primary"
               size="default"
-              @click="login"
+              native-type="submit"
+              @click.prevent="login"
             >
               登录
             </el-button>
@@ -43,17 +45,26 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, useTemplateRef } from 'vue'
+import { reactive, ref } from 'vue'
 import { User, Lock } from '@element-plus/icons-vue'
-import type { FormInstance, FormItemRule } from 'element-plus'
+import { ElNotification, type FormItemRule } from 'element-plus'
+import useUserStore from '@/store/modules/user'
+import { getTime } from '@/utils/time'
+import { useRoute, useRouter } from 'vue-router'
+
+let router = useRouter()
+
+let route = useRoute()
 
 type FormValidator = NonNullable<FormItemRule['validator']>
 
-const loginForms = useTemplateRef<FormInstance>('loginForms')
+const loginForms = ref()
 
-let loginForm = reactive({ username: 'admin', password: 'atguigu123' })
+let loginForm = reactive({ username: 'admin', password: '111111' })
 
 let loading = ref(false)
+
+let useStore = useUserStore()
 
 const validatorUserName: FormValidator = (_rule, value, callback) => {
   if (value.length >= 5) {
@@ -77,7 +88,26 @@ const rules = {
 }
 
 const login = async () => {
-  console.log('点击登录按钮了！')
+  await loginForms.value.validate()
+  loading.value = true
+
+  try {
+    await useStore.userLogin(loginForm)
+    let redirect = route.query.redirect as string
+    router.push({ path: redirect || '/' })
+    ElNotification({
+      type: 'success',
+      message: '欢迎回来',
+      title: `Hi, ${getTime()}好`,
+    })
+    loading.value = false
+  } catch (error) {
+    loading.value = false
+    ElNotification({
+      type: 'error',
+      message: (error as Error).message,
+    })
+  }
 }
 </script>
 
