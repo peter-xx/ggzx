@@ -1,7 +1,9 @@
 <template>
   <div>
-    <router-view></router-view>
+    <h1>这里是主页面！</h1>
   </div>
 </template>
 
 <script setup lang="ts"></script>
+
+<style scoped></style>
