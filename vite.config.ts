@@ -24,7 +24,9 @@ export default defineConfig(({ command }) => ({
   css: {
     preprocessorOptions: {
       scss: {
-        additionalData: '@use "@/styles/variable";',
+        // 注入全局变量：as * 使变量无需命名空间即可直接使用；
+        // 不带 .scss 扩展名（stylelint scss/load-partial-extension 规则要求）
+        additionalData: '@use "@/styles/variable" as *;',
       },
     },
   },
