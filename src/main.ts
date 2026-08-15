@@ -8,6 +8,7 @@ import 'virtual:svg-icons-register'
 import globalComponent from './components/index'
 import router from './router'
 import pinia from './store/index.ts'
+import './permisstion.ts'
 
 const app = createApp(App)
 // 全局注册 Element Plus，并指定中文语言包
