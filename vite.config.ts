@@ -1,46 +1,47 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 import { viteMockServe } from 'vite-plugin-mock'
 
 // https://vite.dev/config/
-export default defineConfig(({ command }) => ({
-  plugins: [
-    vue(),
-    createSvgIconsPlugin({
-      iconDirs: [path.resolve(process.cwd(), 'src/assets/icons')],
-      symbolId: 'icon-[dir]-[name]',
-    }),
-    viteMockServe({
-      enable: command === 'serve',
-    }),
-  ],
-  resolve: {
-    alias: {
-      '@': path.resolve(process.cwd(), 'src'),
-    },
-  },
-  css: {
-    preprocessorOptions: {
-      scss: {
-        // 注入全局变量：as * 使变量无需命名空间即可直接使用；
-        // 不带 .scss 扩展名（stylelint scss/load-partial-extension 规则要求）
-        additionalData: '@use "@/styles/variable" as *;',
+export default defineConfig(({ command, mode }) => {
+  const env = loadEnv(mode, process.cwd())
+
+  return {
+    plugins: [
+      vue(),
+      createSvgIconsPlugin({
+        iconDirs: [path.resolve(process.cwd(), 'src/assets/icons')],
+        symbolId: 'icon-[dir]-[name]',
+      }),
+      viteMockServe({
+        // 由 .env 中的 VITE_MOCK 控制：'true' 启用 mock，否则关闭走真实后端
+        enable: command === 'serve' && env.VITE_MOCK === 'true',
+      }),
+    ],
+    resolve: {
+      alias: {
+        '@': path.resolve(process.cwd(), 'src'),
       },
     },
-  },
-  server: {
-    // 与真实后端联调时使用：将 /dev-api 前缀请求转发到后端服务
-    // 开发环境 mock 生效时通过 bypass 跳过代理，请求走本地 mock；
-    // 接入真实后端时，将上方 viteMockServe 的 enable 改为 false 即可让代理生效
-    proxy: {
-      '/dev-api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-        rewrite: (p) => p.replace(/^\/dev-api/, ''),
-        bypass: () => (command === 'serve' ? false : undefined),
+    css: {
+      preprocessorOptions: {
+        scss: {
+          // 注入全局变量：as * 使变量无需命名空间即可直接使用；
+          // 不带 .scss 扩展名（stylelint scss/load-partial-extension 规则要求）
+          additionalData: '@use "@/styles/variable" as *;',
+        },
       },
     },
-  },
-}))
+    server: {
+      proxy: {
+        [env.VITE_APP_BASE_API]: {
+          target: env.VITE_SERVE,
+          changeOrigin: true,
+          rewrite: (p) => p.replace(/^\/dev-api/, ''),
+        },
+      },
+    },
+  }
+})

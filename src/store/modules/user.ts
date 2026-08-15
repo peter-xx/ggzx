@@ -19,7 +19,9 @@ const useUserStore = defineStore('User', {
       buttons: [],
     }
   },
+
   getters: {},
+
   actions: {
     async userLogin(data: LoginFormData) {
       const result: LoginResponseData = await reqLogin(data)
