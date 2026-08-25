@@ -200,3 +200,21 @@ git checkout develop && git merge --no-ff hotfix/xxx  # 同步修复到 develop
 - 依赖安装后 husky 通过 `prepare` 脚本自动安装钩子
 - 修改配置文件（eslint/stylelint/commitlint）后需自测对应 lint 命令
 - 新建组件使用 `<script setup lang="ts">` 写法，接口类型命名使用 PascalCase
+
+## 版本约束与坑位（迁移自 Qoder 项目记忆）
+
+- **vue-tsc 固定 `~2.1.10`**（TS `~6.0.2`）：vue-tsc 3.x 有模板 ref 关联回归（误报 TS6133 unused）；且 2.1.10 + TS 6.0.3 下同一 SFC 同时写普通 `<script>` 与 `<script setup>` 会误报 TS1128。**新组件一律只用一个 `<script setup lang="ts">`，组件名用 `defineOptions({ name: 'xxx' })`**
+- **Sass additionalData**：`vite.config.ts` 中必须写 `@use "@/styles/variable" as *`（带 `as *`，否则组件里直接写 `$xxx` 报 Undefined variable）
+- **TypeScript 6**：`baseUrl` 已废弃，`paths` 值必须带 `./` 前缀（如 `"@/*": ["./src/*"]`）；solution-style 下子配置（tsconfig.app.json）需自行声明 paths；`erasableSyntaxOnly` 下禁用 `enum`，用 `const 对象 + as const` 替代
+- **PowerShell 执行策略**：npm/pnpm/npx 报 PSSecurityException 时执行 `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force`；应急可用 node 直接调模块（如 `node node_modules/stylelint/bin/stylelint.mjs`）；`curl` 是 Invoke-WebRequest 别名，走代理请用 `curl.exe -x`
+- **vue-router（hash 模式）**：手输地址必须包含 `#/`；根路径已 redirect 到 `/home`
+- **husky**：Windows PowerShell 下直接测试钩子用 Git Bash 全路径：`& "C:\Program Files\Git\bin\bash.exe" .husky/pre-commit`
+- 更多历史经验（含各任务解决过程）归档于 `~/.dsh/memory/qoder-memories/d-codebase-ggzx/`
+
+---
+
+## AI 记忆归档（迁移自 Qoder CN，2026-08-18）
+
+本项目的 AI 积累记忆（技术栈、踩坑经验、任务总结等）已从 Qoder CN 导出，存放于本项目 `.ai-memories/` 目录（按主题分类的 Markdown，工具无关，可供 Claude Code / Cursor 等直接查阅）。
+
+- 集中备份：`~/.dsh/memory/qoder-memories/d-codebase-ggzx/`
